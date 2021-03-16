@@ -43,7 +43,7 @@ type FixesOut struct {
 func TestShowFixes(t *testing.T) {
 	r := common.GetRouter(false)
 	// Todo this is very brittle, need to use a mock
-	r.Use(common.P4Connecter(config.Config{P4Port: "localhost:1999", P4User: "brett"}))
+	r.Use(common.P4Connecter(config.Config{P4Port: os.Getenv("P4REST_TEST_PORT"), P4User: os.Getenv("P4REST_TEST_PORT")}))
 
 	r.GET("/fixes", Fixes)
 
@@ -71,7 +71,7 @@ func TestShowFixes(t *testing.T) {
 
 // Test the Fixes controller
 func TestFixes(t *testing.T) {
-	w, c, _ := common.TestContext(common.NewP4C())
+	w, c, _ := common.TestContext(common.NewP4CParams(config.Config{P4Port: os.Getenv("P4REST_TEST_PORT"), P4User: os.Getenv("P4REST_TEST_PORT")}))
 	c.Request, _ = http.NewRequest("GET", "/fixes?change=1", nil)
 	Fixes(c)
 	b, _ := ioutil.ReadAll(w.Body)
