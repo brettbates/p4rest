@@ -30,3 +30,14 @@ func TestHTTPResponse(t *testing.T, r *gin.Engine, req *http.Request, f func(w *
 		t.Fail()
 	}
 }
+
+// TestContext returns a
+func TestContext(p4c P4Runner) (*httptest.ResponseRecorder, *gin.Context, *gin.Engine) {
+	gin.SetMode(gin.TestMode)
+
+	w := httptest.NewRecorder()
+	c, e := gin.CreateTestContext(w)
+	c.Set("p4c", p4c)
+
+	return w, c, e
+}

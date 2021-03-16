@@ -11,7 +11,9 @@ import (
 
 	p4 "github.com/brettbates/p4go"
 	"github.com/brettbates/p4rest/common"
+	"github.com/brettbates/p4rest/config"
 	"github.com/gin-gonic/gin"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestMain(m *testing.M) {
@@ -22,14 +24,26 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
+type FakeP4Runner struct {
+	mock.Mock
+}
+
+// Mocks p4.Run, so we can run fake perforce commands
+func (mock *FakeP4Runner) Run(args []string) ([]map[interface{}]interface{}, error) {
+	ags := mock.Called(args)
+	return ags.Get(0).([]map[interface{}]interface{}), ags.Error(1)
+}
+
 type FixesOut struct {
 	Fixes []p4.Fix
 }
 
 // Test that a GET request to the home page returns the home page with
 // the HTTP code 200 for an unauthenticated user
-func TestShowFixesUnauthenticated(t *testing.T) {
+func TestShowFixes(t *testing.T) {
 	r := common.GetRouter(false)
+	// Todo this is very brittle, need to use a mock
+	r.Use(common.P4Connecter(config.Config{P4Port: "localhost:1999", P4User: "brett"}))
 
 	r.GET("/fixes", Fixes)
 
@@ -53,4 +67,21 @@ func TestShowFixesUnauthenticated(t *testing.T) {
 		err = json.Unmarshal(p, &fixesO)
 		return err == nil && len(fixesO.Fixes) == 1 && statusOK
 	})
+}
+
+// Test the Fixes controller
+func TestFixes(t *testing.T) {
+	w, c, _ := common.TestContext(common.NewP4C())
+	Fixes(c)
+	b, _ := ioutil.ReadAll(w.Body)
+	if w.Code != 200 {
+		t.Error(w.Code, string(b))
+	} else {
+		fmt.Println(string(b))
+		var fixesO FixesOut
+		err := json.Unmarshal(b, &fixesO)
+		if err != nil {
+			t.Errorf("Failed to unmarshal \n\t %s, \ngot error:\n\t %s", b, err)
+		}
+	}
 }

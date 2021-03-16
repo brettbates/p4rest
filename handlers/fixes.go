@@ -2,21 +2,21 @@ package handlers
 
 import (
 	"net/http"
-	"time"
+
+	log "github.com/sirupsen/logrus"
 
 	p4 "github.com/brettbates/p4go"
+	"github.com/brettbates/p4rest/common"
 	"github.com/gin-gonic/gin"
 )
 
 // Fixes returns p4 fixes for a given id
 func Fixes(ctx *gin.Context) {
-	ctx.JSON(http.StatusOK, gin.H{"Fixes": []p4.Fix{
-		{
-			Code:   "code",
-			Change: 0,
-			Client: "client",
-			Date:   time.Now(),
-			Job:    "job",
-			Status: "status",
-			User:   "user"}}})
+	p4r := ctx.MustGet("p4c").(common.P4Runner)
+	fixes, err := p4.RunFixes(p4r, []string{"//...@1,@1"})
+	if err != nil {
+		// TODO Log the erorr and request
+		log.Printf("Failed to retrieve fixes %s\n", err)
+	}
+	ctx.JSON(http.StatusOK, gin.H{"Fixes": fixes})
 }
