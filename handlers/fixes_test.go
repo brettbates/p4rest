@@ -72,6 +72,7 @@ func TestShowFixes(t *testing.T) {
 // Test the Fixes controller
 func TestFixes(t *testing.T) {
 	w, c, _ := common.TestContext(common.NewP4C())
+	c.Request, _ = http.NewRequest("GET", "/fixes?change=1", nil)
 	Fixes(c)
 	b, _ := ioutil.ReadAll(w.Body)
 	if w.Code != 200 {
